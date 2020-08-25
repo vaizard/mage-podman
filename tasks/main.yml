@@ -1,0 +1,20 @@
+---
+
+- name: Ensure apt keys are configured
+  apt_key:
+    url: "{{ item.keyurl | default(omit) }}"
+    keyserver: "{{ item.keyserver | default(omit) }}"
+    id: "{{ item.keyid | default(omit) }}"
+    state: present
+  when: item.keyurl is defined or item.keyid is defined
+  with_items: "{{ podman_repos }}"
+
+- name: Ensure PPAs are configured
+  apt_repository: repo="{{ item.repo }}" codename="{{ item.codename | default(omit)}}"
+  loop: "{{ podman_repos }}"
+  when: podman_repos | selectattr("repo", "defined") | list | length > 0
+
+- name: Ubuntu | Install podman suite of tools
+  apt:
+    name: "{{ podman_packages + podman_requirements }}"
+    update_cache: yes
